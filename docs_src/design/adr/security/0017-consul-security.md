@@ -26,7 +26,7 @@ Further accesses to configuration data are performed first against the Consul ke
 and the static `configuration.toml` remains as the fallback mechanism.
 
 Since configuration data can affect the runtime behavior of services,
-ompensating controls must be introduced in order to mitigate the risks introduced
+compensating controls must be introduced in order to mitigate the risks introduced
 by moving configuration from a static file verified with a SHA-256 hash
 into to an HTTP-accessible service with mutable state.
 
@@ -39,37 +39,39 @@ Consul will be configured with access control list (ACL) functionality enabled,
 and each EdgeX service will utilize a Consul access token to authenticate to Consul.
 Consul access tokens will be requested from the Vault Consul secrets engine
 (to avoid introducing additional bootstrapping secrets).
-Consul tokens will be transient and not persisted
-(to avoid having to persistent store and renew generated tokens).
 
 ## Consequences
 
 Full implementation of this ADR will deny Consul access to all existing Consul clients.
 To limit the impacts of the change, deployment will take place in phases:
 
-Phase 1:
+### Phase 1
 
-- Vault bootstrapper will install Vault Consul secrets engine (one-time setup).
+- Vault bootstrapper will install Vault Consul secrets engine.
 - Secretstore-setup will create a Vault token for consul secrets engine configuration.
-- Consul bootstrapper will enable Consul ACLs with non-persistent tokens and a default "allow" policy.
-- Consul bootstrapper will create a Consul management token,
+- Consul will be started with Consul ACLs enabled with persistent agent tokens and a default "allow" policy.
+- Consul bootstrapper will create a bootstrap management token
   and use the provided Vault token to (re)configure the Consul secrets engine in Vault.
+- Consul bootstrapper will create agent ("node") token and install it into the agent.
 - Open a port to signal that Consul bootstrapping is completed.
   (Integrate with `ready_to_run` signal.)
 
-Phase 2:
+### Phase 2
 
-- Consul bootstrapping process will enable Consul ACLs with non-persistent tokens and change to a default "deny" policy.
-- Consul bootstrapper will install a role in Vault that allows for all-Consul access with a 1 hour TTL.
+- Consul bootstrapper will install a role in Vault that creates global-management tokens in Consul with no TTL.
 - Registry and configuration client libraries will be modified to request
   Consul access tokens from Vault and use the Consul access token for Consul transactions.
-  (Use of an expired token results in a new request to Vault.)
+- Consul tokens once requested will be stored in Vault KV store for later retrieval.
+- Consul configuration will be changed to a default "deny" policy.
 
-Phase 3:
+### Phase 3
 
 - Introduce per-service roles and ACL policies that give each service
-  access to its own subset of the Consul key-value store.
-
+  access to its own subset of the Consul key-value store
+  and to register in the service registry.
+- Token lifetime will be reduced to 1 hour.
+- Expiration of a Consul token will result in a call to Vault to request a new token
+  (resulting token will be persisted in Vault KV store for the service).
 
 ## References
 
