@@ -85,7 +85,8 @@ To limit the impacts of the change, deployment will take place in phases:
 - Consul bootstrapper will install a role in Vault that creates global-management tokens in Consul with no TTL.
 - Registry and configuration client libraries will be modified to accept a Consul access token.
 - go-mod-bootstrap will have contain the necessary glue logic to
-  request a Consul access token from Vault and persist it as a service-specific secret.
+  request a service-specifc Consul access token from Vault
+  and persist it as a service-specific secret.
 - Consul configuration will be changed to a default "deny" policy
   once all services have been changed to authenticated access mode.
 
@@ -94,11 +95,11 @@ To limit the impacts of the change, deployment will take place in phases:
 - Introduce per-service roles and ACL policies that give each service
   access to its own subset of the Consul key-value store
   and to register in the service registry.
-
-## Limitations
-
-Since Consul tokens are non-expiring, it is a good idea to rotate them periodically.
-The proposed implementation does not currently have support for Consul token rotation.
+- Vault configuration will be changed to request two (2) hour expiring Consul access tokens
+  instead of non-expiring global management tokens.
+- Consul access tokens will be scoped to the needs of the particular service
+  (ability to update that service's registry data, an access that services's KV store).
+- Glue logic will ensure that expired Consul tokens are replaced with fresh ones.
 
 
 ## References
