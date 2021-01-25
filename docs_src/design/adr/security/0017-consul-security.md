@@ -99,7 +99,8 @@ To limit the impacts of the change, deployment will take place in phases:
   instead of non-expiring global management tokens.
 - Consul access tokens will be scoped to the needs of the particular service
   (ability to update that service's registry data, an access that services's KV store).
-- Glue logic will ensure that expired Consul tokens are replaced with fresh ones.
+- Glue logic will ensure that expired Consul tokens are replaced with fresh ones
+  (token freshness can be pre-checked by a request made to `/acl/token/self`).
 
 
 ## References
