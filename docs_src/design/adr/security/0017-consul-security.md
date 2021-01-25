@@ -57,7 +57,7 @@ Consul supports authentication via the `X-Consul-Token` HTTP header,
 the `Authorization: Bearer` header,
 or via a `?token=` query parameter (insecure).
 The API gateway should be configured to simply pass HTTP requests
-and rely on Consul's authentication mechanims for both API and UI accesses.
+and rely on Consul's authentication mechanisms for both API and UI accesses.
 For API accesses, the `X-Consul-Token` method should be used
 as it will not conflict with API Gateway authentication.
 For UI accesses, the Consul UI will prompt the user for an access token.
